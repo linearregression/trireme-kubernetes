@@ -138,13 +138,14 @@ func (k *KubernetesPolicy) HandleDestroyPU(contextID string) error {
 func (k *KubernetesPolicy) resolvePodPolicy(kubernetesPod string, kubernetesNamespace string) (*policy.PUPolicy, error) {
 	// Adding all the specific Kubernetes K,V from the Pod.
 	// Iterate on PodLabels and add them as tags.
-	podLabels, err := k.KubernetesClient.PodLabels(kubernetesPod, kubernetesNamespace)
+	podLabels, podIP, err := k.KubernetesClient.PodLabelsAndIP(kubernetesPod, kubernetesNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't get labels for pod %s : %v", kubernetesPod, err)
 	}
-	podIP, err := k.KubernetesClient.PodIP(kubernetesPod, kubernetesNamespace)
-	if err != nil {
-		return nil, fmt.Errorf("Couldn't get IP for pod %s : %v", kubernetesPod, err)
+
+	// If IP is empty, wait for an UpdatePodEvent with the Actual PodIP.
+	if podIP == "" {
+		return notInfraContainerPolicy(), nil
 	}
 	// Updating the cacheEntry with the PodLabels.
 	k.cache.updatePodLabels(kubernetesPod, kubernetesNamespace, podLabels)
@@ -157,7 +158,6 @@ func (k *KubernetesPolicy) resolvePodPolicy(kubernetesPod string, kubernetesName
 		glog.V(2).Infof("Pod namespace (%s) is not NetworkPolicyActivated, AllowAll", kubernetesNamespace)
 		allowAllPuPolicy := allowAllPolicy()
 		allowAllPuPolicy.PolicyTags = podLabels
-		fmt.Printf("PodIP %s", podIP)
 		allowAllPuPolicy.PolicyIPs = []string{podIP}
 		return allowAllPuPolicy, nil
 	}

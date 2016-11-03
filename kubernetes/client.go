@@ -101,8 +101,16 @@ func (c *Client) PodIP(podName string, namespace string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error getting Kubernetes IP for pod %v : %v ", podName, err)
 	}
-	fmt.Printf("Status: %+v", targetPod.Status)
 	return targetPod.Status.PodIP, nil
+}
+
+// PodLabelsAndIP returns the list of all labels associated with a pod as well as the Pod's IP.
+func (c *Client) PodLabelsAndIP(podName string, namespace string) (map[string]string, string, error) {
+	targetPod, err := c.kubeClient.Pods(namespace).Get(podName)
+	if err != nil {
+		return nil, "", fmt.Errorf("error getting Kubernetes labels & IP for pod %v : %v ", podName, err)
+	}
+	return targetPod.GetLabels(), targetPod.Status.PodIP, nil
 }
 
 // LocalPods return a PodList with all the pods scheduled on the local node
