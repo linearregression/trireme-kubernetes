@@ -20,10 +20,7 @@ spec:
              - name: TRIREME_AUTH_TYPE
                value: PSK
              - name: TRIREME_PSK
-               valueFrom:
-                 secretKeyRef:
-                   name: mysecret
-                   key: username
+               value: sdfsdf
              - name: KUBERNETES_NODE
                valueFrom:
                  fieldRef:

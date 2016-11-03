@@ -110,7 +110,11 @@ func (c *Client) PodLabelsAndIP(podName string, namespace string) (map[string]st
 	if err != nil {
 		return nil, "", fmt.Errorf("error getting Kubernetes labels & IP for pod %v : %v ", podName, err)
 	}
-	return targetPod.GetLabels(), targetPod.Status.PodIP, nil
+	ip := targetPod.Status.PodIP
+	if targetPod.Status.PodIP == targetPod.Status.HostIP {
+		ip = "host"
+	}
+	return targetPod.GetLabels(), ip, nil
 }
 
 // LocalPods return a PodList with all the pods scheduled on the local node
